@@ -1,0 +1,35 @@
+import time
+
+class AgentAres:
+    def __init__(self, k_client, api_client):
+        self.k = k_client
+        self.api = api_client
+
+    def scalping_estrategia(self, par="XXBTZUSD", monto=100.0, precio_objetivo=58000.00, porcentaje_bajada=0.005, intervalo=30):
+        """
+        Estrategia de scalping: compra si el precio baja un % definido o llega a un precio objetivo.
+        """
+        try:
+            precio_inicial = float(self.k.get_ticker_information(par)['c'][0])
+        except Exception as e:
+            print(f"[Ares] Error obteniendo precio inicial: {e}")
+            return
+
+        while True:
+            try:
+                ticker = self.k.get_ticker_information(par)
+                precio_actual = float(ticker['c'][0])
+                print(f"[Ares] Precio actual de {par}: ${precio_actual}")
+
+                if precio_actual <= precio_objetivo or precio_actual <= precio_inicial * (1 - porcentaje_bajada):
+                    print(f"[Ares] Comprando {par} a ${precio_actual}")
+                    self.api.query_private('AddOrder', {
+                        'pair': par,
+                        'type': 'buy',
+                        'ordertype': 'market',
+                        'volume': monto
+                    })
+                    break
+            except Exception as e:
+                print(f"[Ares] Error durante la operación: {e}")
+            time.sleep(intervalo)
